@@ -12,9 +12,7 @@ import {
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
-import type { Request } from 'express';
 import { UserQuery } from './dtos/userQuery.dto';
-import { Req } from '@nestjs/common';
 
 @Controller('users')
 export class UsersController {
