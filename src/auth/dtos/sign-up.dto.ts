@@ -21,6 +21,10 @@ export class SignUpDto {
 
   @IsNotEmpty()
   @IsString()
+  gender!: string;
+
+  @IsNotEmpty()
+  @IsString()
   @Length(6, 20)
   password!: string;
 }

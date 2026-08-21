@@ -8,6 +8,7 @@ import { ExpensesModule } from './expenses/expenses.module';
 import { ProductsModule } from './products/products.module';
 
 import dns from 'dns';
+import { AuthModule } from './auth/auth.module';
 
 dns.setServers(['8.8.8.8', '8.8.4.4']);
 
@@ -18,6 +19,7 @@ dns.setServers(['8.8.8.8', '8.8.4.4']);
     UsersModule,
     ExpensesModule,
     ProductsModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

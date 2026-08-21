@@ -1,4 +1,9 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+} from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { IProduct } from './entities/product.entity';
@@ -6,18 +11,9 @@ import { request } from 'http';
 
 @Injectable()
 export class ProductsService {
-  private products: IProduct[] = [
-    {
-      id: 1,
-      name: 'shirt',
-      quantity: 2,
-      price: 50,
-      category: 'shopping',
-      description: 'description',
-    },
-  ];
+  private products: IProduct[] = [];
 
-  create(dto: CreateProductDto) {
+  create(dto: CreateProductDto, maker: string) {
     const lastId = this.products[this.products.length - 1]?.id || 0;
 
     const newProduct: IProduct = {
@@ -27,6 +23,7 @@ export class ProductsService {
       quantity: dto.quantity,
       price: dto.price,
       description: dto.description,
+      maker,
     };
 
     this.products.push(newProduct);
@@ -61,11 +58,15 @@ export class ProductsService {
 
     return product;
   }
-  update(id: number, updateProductDto: UpdateProductDto) {
+  update(id: number, updateProductDto: UpdateProductDto, maker: string) {
     const index = this.products.findIndex((product) => product.id === id);
 
     if (index === -1) {
       throw new HttpException('Product not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (this.products[index].maker !== maker) {
+      throw new ForbiddenException('You can only update your own products');
     }
 
     const updateReq: Partial<IProduct> = {};
@@ -98,10 +99,14 @@ export class ProductsService {
     return this.products[index];
   }
 
-  remove(id: number) {
+  remove(id: number, maker: string) {
     const index = this.products.findIndex((u) => u.id === id);
     if (index === -1) {
       throw new HttpException('product not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (this.products[index].maker !== maker) {
+      throw new ForbiddenException('You can only delete your own products');
     }
 
     const [deletedProduct] = this.products.splice(index, 1);

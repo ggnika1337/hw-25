@@ -13,15 +13,17 @@ import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { isEmailProvided } from 'src/guards/is-email-provided.guard';
+import { IsAuthGuard } from 'src/guards/isAuth.guard';
+import { UserId } from 'src/users/decorators/user.decorator';
 
 @Controller('products')
-@UseGuards()
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Post()
-  create(@Body() createProductDto: CreateProductDto) {
-    return this.productsService.create(createProductDto);
+  @UseGuards(IsAuthGuard)
+  create(@Body() createProductDto: CreateProductDto, @UserId() userId: string) {
+    return this.productsService.create(createProductDto, userId);
   }
 
   @Get()
@@ -37,12 +39,18 @@ export class ProductsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
-    return this.productsService.update(+id, updateProductDto);
+  @UseGuards(IsAuthGuard)
+  update(
+    @Param('id') id: string,
+    @Body() updateProductDto: UpdateProductDto,
+    @UserId() userId: string,
+  ) {
+    return this.productsService.update(+id, updateProductDto, userId);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.productsService.remove(+id);
+  @UseGuards(IsAuthGuard)
+  remove(@Param('id') id: string, @UserId() userId: string) {
+    return this.productsService.remove(+id, userId);
   }
 }

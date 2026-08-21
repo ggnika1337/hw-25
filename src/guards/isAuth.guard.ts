@@ -17,13 +17,11 @@ export class IsAuthGuard implements CanActivate {
     const token = this.getTokenFromHeaders(req.headers);
 
     if (!token) {
-      return false;
+      throw new UnauthorizedException('Authentication token is required');
     }
 
     try {
-      const payload = this.jwtService.verify(token, {
-        secret: process.env.JWT_SECRET,
-      });
+      const payload = this.jwtService.verify(token);
 
       req.userId = payload.userId;
     } catch (error) {

@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -9,7 +10,7 @@ import { UpdateUserDto } from './dtos/update-user.dto';
 import { UserQuery } from './dtos/userQuery.dto';
 import { User } from './schemas/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { HydratedDocument, Model } from 'mongoose';
 
 @Injectable()
 export class UsersService {
@@ -17,6 +18,41 @@ export class UsersService {
     @InjectModel(User.name)
     private readonly userModel: Model<User>,
   ) {}
+
+  async findByEmail(
+    email: string,
+    includePassword = false,
+  ): Promise<HydratedDocument<User> | null> {
+    const query = this.userModel.findOne({ email });
+
+    return includePassword ? query.select('password') : query;
+  }
+
+  async createAuthUser({
+    fullName,
+    email,
+    age,
+    gender,
+    password,
+  }: Pick<
+    User,
+    'fullName' | 'email' | 'age' | 'gender' | 'password'
+  >): Promise<HydratedDocument<User>> {
+    const now = new Date();
+    const subEnd = new Date(now);
+    subEnd.setMonth(subEnd.getMonth() + 1);
+
+    return this.userModel.create({
+      fullName,
+      email,
+      age,
+      gender,
+      password,
+      subStart: now,
+      subEnd,
+      expenses: [],
+    });
+  }
 
   // check if user subscription is valid
   async isSubscriptionValid(email: string): Promise<boolean> {
@@ -30,8 +66,8 @@ export class UsersService {
   }
 
   // upgrade subscription by 1 month
-  async upgradeSubscription(email: string): Promise<User> {
-    const user = await this.userModel.findOne({ email });
+  async upgradeSubscription(userId: string): Promise<User> {
+    const user = await this.userModel.findById(userId);
 
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
@@ -117,7 +153,11 @@ export class UsersService {
     return user;
   }
 
-  async deleteUserById(userId: string): Promise<User> {
+  async deleteUserById(userId: string, requesterId: string): Promise<User> {
+    if (userId !== requesterId) {
+      throw new ForbiddenException('You can only delete your own account');
+    }
+
     const deletedUser = await this.userModel.findByIdAndDelete(userId);
 
     if (!deletedUser) {
@@ -129,8 +169,13 @@ export class UsersService {
 
   async updateUserById(
     userId: string,
+    requesterId: string,
     dto: UpdateUserDto,
   ): Promise<User> {
+    if (userId !== requesterId) {
+      throw new ForbiddenException('You can only update your own account');
+    }
+
     if (dto.email) {
       const existingUser = await this.userModel.findOne({
         email: dto.email,

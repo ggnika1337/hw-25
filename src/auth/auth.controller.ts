@@ -10,8 +10,8 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('sign-up')
-  signUp(@Body() { age, email, fullName, password }: SignUpDto) {
-    return this.authService.signUp({ email, fullName, password, age });
+  signUp(@Body() { age, email, fullName, gender, password }: SignUpDto) {
+    return this.authService.signUp({ email, fullName, gender, password, age });
   }
 
   @Post('sign-in')

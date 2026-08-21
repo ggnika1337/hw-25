@@ -7,10 +7,7 @@ export class User {
     throw new Error('Method not implemented.');
   }
   @Prop({ type: String, required: true })
-  firstName!: string;
-
-  @Prop({ type: String, required: true })
-  lastName!: string;
+  fullName!: string;
 
   @Prop({ type: String, required: true })
   gender!: string;
@@ -23,6 +20,9 @@ export class User {
 
   @Prop({ type: String, unique: true })
   email!: string;
+
+  @Prop({ type: String })
+  password: string;
 
   @Prop({ default: Date.now })
   subStart!: Date;

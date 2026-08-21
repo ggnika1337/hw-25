@@ -3,9 +3,10 @@ import { ProductsService } from './products.service';
 import { ProductsController } from './products.controller';
 import { UsersModule } from 'src/users/users.module';
 import { isEmailProvided } from 'src/guards/is-email-provided.guard';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [UsersModule],
+  imports: [UsersModule, AuthModule],
   controllers: [ProductsController],
   providers: [ProductsService, isEmailProvided],
 })

@@ -4,9 +4,11 @@ import { ExpensesService } from './expenses.service';
 import { ExpensesController } from './expenses.controller';
 import { Expense, ExpenseSchema } from './schemas/expense.schema';
 import { User, UserSchema } from 'src/users/schemas/user.schema';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
+    AuthModule,
     MongooseModule.forFeature([
       {
         name: Expense.name,

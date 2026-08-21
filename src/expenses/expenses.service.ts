@@ -12,49 +12,26 @@ export class ExpensesService {
   constructor(
     @InjectModel(Expense.name)
     private readonly expenseModel: Model<Expense>,
-
     @InjectModel(User.name)
     private readonly userModel: Model<User>,
   ) {}
 
-  async getExpenses({
-    category,
-    priceFrom,
-    priceTo,
-    page,
-    take,
-  }: ExpenseQueries): Promise<Expense[]> {
-    const filter: any = {};
+  async getExpenses(
+    userId: string,
+    { category, priceFrom, priceTo, page, take }: ExpenseQueries,
+  ): Promise<Expense[]> {
+    const filter: any = { owner: userId };
 
-    if (category) {
-      filter.category = category;
-    }
+    if (category) filter.category = category;
+    if (priceFrom !== undefined) filter.price = { ...filter.price, $gte: priceFrom };
+    if (priceTo !== undefined) filter.price = { ...filter.price, $lte: priceTo };
 
-    if (priceFrom !== undefined) {
-      filter.price = {
-        ...filter.price,
-        $gte: priceFrom,
-      };
-    }
-
-    if (priceTo !== undefined) {
-      filter.price = {
-        ...filter.price,
-        $lte: priceTo,
-      };
-    }
-
-    const skip = (page - 1) * take;
-
-    return await this.expenseModel.find(filter).skip(skip).limit(take);
+    return this.expenseModel.find(filter).skip((page - 1) * take).limit(take);
   }
 
-  async createExpense(email: string, dto: CreateExpenseDto): Promise<Expense> {
-    const user = await this.userModel.findOne({ email });
-
-    if (!user) {
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    }
+  async createExpense(userId: string, dto: CreateExpenseDto): Promise<Expense> {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
     const expense = await this.expenseModel.create({
       ...dto,
@@ -63,35 +40,27 @@ export class ExpensesService {
     });
 
     await this.userModel.findByIdAndUpdate(user._id, {
-      $push: {
-        expenses: expense._id,
-      },
+      $push: { expenses: expense._id },
     });
 
     return expense;
   }
 
-  async getExpenseById(expenseId: string): Promise<Expense> {
-    const expense = await this.expenseModel.findById(expenseId);
-
-    if (!expense) {
-      throw new HttpException('Expense not found', HttpStatus.NOT_FOUND);
-    }
-
+  async getExpenseById(expenseId: string, userId: string): Promise<Expense> {
+    const expense = await this.expenseModel.findOne({ _id: expenseId, owner: userId });
+    if (!expense) throw new HttpException('Expense not found', HttpStatus.NOT_FOUND);
     return expense;
   }
 
-  async deleteExpenseById(expenseId: string): Promise<Expense> {
-    const expense = await this.expenseModel.findByIdAndDelete(expenseId);
+  async deleteExpenseById(expenseId: string, userId: string): Promise<Expense> {
+    const expense = await this.expenseModel.findOneAndDelete({
+      _id: expenseId,
+      owner: userId,
+    });
+    if (!expense) throw new HttpException('Expense not found', HttpStatus.NOT_FOUND);
 
-    if (!expense) {
-      throw new HttpException('Expense not found', HttpStatus.NOT_FOUND);
-    }
-
-    await this.userModel.findByIdAndUpdate(expense.owner, {
-      $pull: {
-        expenses: expense._id,
-      },
+    await this.userModel.findByIdAndUpdate(userId, {
+      $pull: { expenses: expense._id },
     });
 
     return expense;
@@ -99,34 +68,24 @@ export class ExpensesService {
 
   async updateExpenseById(
     expenseId: string,
+    userId: string,
     dto: UpdateExpenseDto,
   ): Promise<Expense> {
-    const expense = await this.expenseModel.findById(expenseId);
+    const expense = await this.expenseModel.findOne({ _id: expenseId, owner: userId });
+    if (!expense) throw new HttpException('Expense not found', HttpStatus.NOT_FOUND);
 
-    if (!expense) {
-      throw new HttpException('Expense not found', HttpStatus.NOT_FOUND);
-    }
-
-    const quantity = dto.quantity ?? expense.quantity;
-    const price = dto.price ?? expense.price;
-
-    const updatedExpense = await this.expenseModel.findByIdAndUpdate(
-      expenseId,
+    const updatedExpense = await this.expenseModel.findOneAndUpdate(
+      { _id: expenseId, owner: userId },
       {
         $set: {
           ...dto,
-          totalPrice: quantity * price,
+          totalPrice: (dto.quantity ?? expense.quantity) * (dto.price ?? expense.price),
         },
       },
-      {
-        new: true,
-      },
+      { new: true },
     );
 
-    if (!updatedExpense) {
-      throw new HttpException('Expense not found', HttpStatus.NOT_FOUND);
-    }
-
+    if (!updatedExpense) throw new HttpException('Expense not found', HttpStatus.NOT_FOUND);
     return updatedExpense;
   }
 }

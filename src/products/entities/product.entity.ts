@@ -5,4 +5,5 @@ export class IProduct {
   quantity!: number;
   category!: string;
   description!: string;
+  maker!: string;
 }
