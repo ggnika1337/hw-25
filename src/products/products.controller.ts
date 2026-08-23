@@ -15,7 +15,9 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { isEmailProvided } from 'src/guards/is-email-provided.guard';
 import { IsAuthGuard } from 'src/guards/isAuth.guard';
 import { UserId } from 'src/users/decorators/user.decorator';
-
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+@UseGuards(ThrottlerGuard)
+@Throttle({ default: { limit: 25, ttl: 60000 } })
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}

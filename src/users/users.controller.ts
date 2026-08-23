@@ -15,7 +15,9 @@ import { UpdateUserDto } from './dtos/update-user.dto';
 import { UserQuery } from './dtos/userQuery.dto';
 import { IsAuthGuard } from 'src/guards/isAuth.guard';
 import { UserId } from './decorators/user.decorator';
-
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+@UseGuards(ThrottlerGuard)
+@Throttle({ default: { limit: 10, ttl: 60000 } })
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}

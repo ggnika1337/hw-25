@@ -15,7 +15,10 @@ import { UpdateExpenseDto } from './dtos/update-expense.dto';
 import { ExpenseQueries } from './dtos/expenseQuery.dto';
 import { IsAuthGuard } from 'src/guards/isAuth.guard';
 import { UserId } from 'src/users/decorators/user.decorator';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 
+@UseGuards(ThrottlerGuard)
+@Throttle({ default: { limit: 25, ttl: 60000 } })
 @Controller('expenses')
 @UseGuards(IsAuthGuard)
 export class ExpensesController {

@@ -34,10 +34,9 @@ export class UsersService {
     age,
     gender,
     password,
-  }: Pick<
-    User,
-    'fullName' | 'email' | 'age' | 'gender' | 'password'
-  >): Promise<HydratedDocument<User>> {
+  }: Pick<User, 'fullName' | 'email' | 'age' | 'gender' | 'password'>): Promise<
+    HydratedDocument<User>
+  > {
     const now = new Date();
     const subEnd = new Date(now);
     subEnd.setMonth(subEnd.getMonth() + 1);
@@ -89,12 +88,7 @@ export class UsersService {
     return await user.save();
   }
 
-  async getUsers({
-    page,
-    take,
-    gender,
-    email,
-  }: UserQuery): Promise<User[]> {
+  async getUsers({ page, take, gender, email }: UserQuery): Promise<User[]> {
     const filter: any = {};
 
     if (gender) {
@@ -113,10 +107,7 @@ export class UsersService {
 
     const skip = (page - 1) * take;
 
-    return await this.userModel
-      .find(filter)
-      .skip(skip)
-      .limit(take);
+    return await this.userModel.find(filter).skip(skip).limit(take);
   }
 
   async createUser(dto: CreateUserDto): Promise<User> {
